@@ -1,0 +1,104 @@
+[
+    {
+        // put the menu item in "selection"
+        "id": "selection",
+        "children":
+        [
+            { 
+                "caption": "-" , 
+                "id":"selection-end-separator"
+            },
+            {
+                "caption": "Paste to Glue",
+                "command": "glue" 
+            }
+        ]
+    },
+    {
+        "id": "preferences",
+        "children":
+        [
+            {
+                "caption": "Package Settings",
+                "mnemonic": "G",
+                "id": "package-settings",
+                "children":
+                [
+                    {
+                        "caption": "Glue",
+                        "children":
+                        [
+                            // open Glue Settings
+                            {
+                                "command": "open_file",
+                                "args": {
+                                    "file": "${packages}/Glue/Glue.sublime-settings"
+                                },
+                                "caption": "Settings - Default"
+                            },
+                            {
+                                "command": "open_file",
+                                "args": {
+                                    "file": "${packages}/User/Glue.sublime-settings"
+                                },
+                                "caption": "Settings - User"
+                            },
+                            { "caption": "-" },
+                            // open Glue Keybinds (specific to each platform :-/)
+                            {
+                                "command": "open_file",
+                                "args": {
+                                    "file": "${packages}/Glue/Default (OSX).sublime-keymap",
+                                    "platform": "OSX"
+                                },
+                                "caption": "Key Bindings – Default"
+                            },
+                            {
+                                "command": "open_file",
+                                "args": {
+                                    "file": "${packages}/Glue/Default (Linux).sublime-keymap",
+                                    "platform": "Linux"
+                                },
+                                "caption": "Key Bindings – Default"
+                            },
+                            {
+                                "command": "open_file",
+                                "args": {
+                                    "file": "${packages}/Glue/Default (Windows).sublime-keymap",
+                                    "platform": "Windows"
+                                },
+                                "caption": "Key Bindings – Default"
+                            },
+                            // (User keybinds)
+                            {
+                                "command": "open_file",
+                                "args": {
+                                    "file": "${packages}/User/Default (OSX).sublime-keymap",
+                                    "platform": "OSX"
+                                },
+                                "caption": "Key Bindings – User"
+                            },
+                            {
+                                "command": "open_file",
+                                "args": {
+                                    "file": "${packages}/User/Default (Linux).sublime-keymap",
+                                    "platform": "Linux"
+                                },
+                                "caption": "Key Bindings – User"
+                            },
+                            {
+                                "command": "open_file",
+                                "args": {
+                                    "file": "${packages}/User/Default (Windows).sublime-keymap",
+                                    "platform": "Windows"
+                                },
+                                "caption": "Key Bindings – User"
+                            },
+                            { "caption": "-" }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]
