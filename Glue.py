@@ -85,32 +85,35 @@ class GlueSnippet():
         if self.sublimeHelper.packageSetting('open_in_browser'):
             webbrowser.open_new_tab(self.url())
 
-    def notify(self, message=False):
+    def notify(self, error=False):
         ''' '''
+        notifyOnSuccess = self.sublimeHelper.packageSetting('notify_on_success')
+        if error is False and notifyOnSuccess is False: return
+
         sound = False
         if self.sublimeHelper.packageSetting('notification_sounds'):
             sound = True
         
         termNotifierPath = os.system("which terminal-notifier")
         
-        if termNotifierPath is not '':
-            self.notifyOSX(sound, message)
+        if termNotifierPath is not '' and termNotifierPath is not 1:
+            self.notifyOSX(sound, error)
         else:
-            self.notifyOther(sound, message)
+            self.notifyOther(sound, error)
 
-    def notifyOther(self, sound=False, message=False):
+    def notifyOther(self, sound=False, error=False):
         ''' '''
-        if message is not False:
-            sublime.error_message(message)
+        if error is not False:
+            sublime.error_message(error)
         elif sublime.ok_cancel_dialog('Pasted to Glue: ' + self.url(), 'Go to URL'):
-            os.system('open ' + self.url())
+            self.show()
 
-    def notifyOSX(self, sound=False, message=False):
+    def notifyOSX(self, sound=False, error=False):
         ''' '''
         if sound: sound = '-sound default'
         
         notificationMessage = self.url()
-        if message is not False: notificationMessage = message
+        if error is not False: notificationMessage = error
 
         notifyClickCommand = ''
         if self.url(): notifyClickCommand = "-execute 'open "+self.url()+"'"
