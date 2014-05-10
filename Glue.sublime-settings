@@ -1,5 +1,8 @@
 {
     "open_in_browser": true,
+    "notify_on_success": true,
+    "notify_on_error": true,
+    
     // you can put your own URL here to where a snippet should be POSTed
     "paste_url": "http://glue.mavrx.io/api/snippets/",
     "api_key": "APIKEYGOESHERE"
