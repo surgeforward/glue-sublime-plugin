@@ -80,15 +80,16 @@ class GlueSnippet():
         except AttributeError:
             return urllib.parse.urlencode(data).encode('utf-8')
 
-    def show(self):
+    def show(self, force=False):
         ''' shows current snippet in default web browser '''
-        if self.sublimeHelper.packageSetting('open_in_browser'):
+        if force is True or self.sublimeHelper.packageSetting('open_in_browser'):
             webbrowser.open_new_tab(self.url())
 
     def notify(self, error=False):
         ''' '''
         notifyOnSuccess = self.sublimeHelper.packageSetting('notify_on_success')
-        if error is False and notifyOnSuccess is False: return
+        if error is False and notifyOnSuccess is False:
+            return sublime.status_message('Pasted to Glue: ' + self.url())
 
         sound = False
         if self.sublimeHelper.packageSetting('notification_sounds'):
@@ -106,7 +107,7 @@ class GlueSnippet():
         if error is not False:
             sublime.error_message(error)
         elif sublime.ok_cancel_dialog('Pasted to Glue: ' + self.url(), 'Go to URL'):
-            self.show()
+            self.show(True)
 
     def notifyOSX(self, sound=False, error=False):
         ''' '''
