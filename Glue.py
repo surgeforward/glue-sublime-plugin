@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import sublime, sublime_plugin, urllib, os, webbrowser, json, pprint
+import sublime, sublime_plugin, urllib, os, webbrowser, json
 
 try:
     from urllib.request import urlopen
@@ -21,7 +21,10 @@ class GlueCommand(sublime_plugin.TextCommand):
             # use sublime module to set users clipboard to new url
             url = Snippet.url()
             sublime.set_clipboard(url)
-            sublime.status_message('Glued: ' + url)
+
+            # check if users package settings, allow us to notify via notification center
+            if sublimeHelper.packageSetting('notify_on_success'):
+                Snippet.notify()
 
             # check if users package settings, allow us to open new snippet in browser
             if sublimeHelper.packageSetting('open_in_browser'):
@@ -87,6 +90,12 @@ class GlueSnippet():
         if not self.lastResult:
             return False
         return self.lastResult.geturl()
+
+    def notify(self):
+        sublime.active_window().run_command("terminal_notifier", {
+            "title": "Pasted to Glue",
+            "message": self.url()
+        })
 
     def saved(self):
         ''' returns true if snippet has been successfully saved '''
