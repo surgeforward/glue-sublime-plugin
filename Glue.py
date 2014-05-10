@@ -1,6 +1,9 @@
 #!/usr/bin/env python
-import sublime, sublime_plugin, urllib, os, webbrowser, json
+import sublime, sublime_plugin
+import os, webbrowser, json
+import urllib
 
+# compatibility with urlopen method for python < 3.0
 try:
     from urllib.request import urlopen
     import urllib.parse
@@ -11,29 +14,17 @@ class GlueCommand(sublime_plugin.TextCommand):
 
     def run(self, edit):
         ''' '''
-        sublimeHelper = GlueSublimeText
-        regions = self.selectedRegions()
-        filename = self.getFilename()
-        Snippet = GlueSnippet(regions=regions, filename=filename)
-        Snippet.save()
+        Snippet = GlueSnippet(
+            regions=self.selectedRegions(),
+            filename=self.getFilename()
+        ).save()
 
         if Snippet.saved():
-            # use sublime module to set users clipboard to new url
-            url = Snippet.url()
-            sublime.set_clipboard(url)
-
-            # check if users package settings, allow us to notify via notification center
-            if sublimeHelper.packageSetting('notify_on_success'):
-                Snippet.notify()
-
-            # check if users package settings, allow us to open new snippet in browser
-            if sublimeHelper.packageSetting('open_in_browser'):
-                Snippet.show()
-
-            return True
-        
-        # error has occured, retrieve from snippet and send to user via sublime text module
-        sublime.status_message('An error has occurred: ' + Snippet.error())
+            Snippet.clipboard()
+            Snippet.notify()
+            Snippet.show()
+        else:
+            Snippet.error()
 
     def selectedRegions(self):
         ''' returns all selected areas in currently active sublime text file '''
@@ -67,12 +58,20 @@ class GlueSublimeText():
 class GlueSnippet():
 
     def __init__(self, filename=None, regions=None):
+        ''' snippet initalization '''
         self.sublimeHelper = GlueSublimeText
         self.api_key = self.sublimeHelper.packageSetting('api_key')
         self.paste_url = self.sublimeHelper.packageSetting('paste_url')
         self.filename = filename
         self.regions = regions
         self.lastResult = None
+        self.lastError = None
+
+    def url(self):
+        ''' returns url for snippet '''
+        if not self.lastResult:
+            return False
+        return self.lastResult.geturl()
 
     def urlencode(self, data):
         ''' encodes data for http transport using urllib '''
@@ -83,34 +82,87 @@ class GlueSnippet():
 
     def show(self):
         ''' shows current snippet in default web browser '''
-        return webbrowser.open_new_tab(self.url())
+        if self.sublimeHelper.packageSetting('open_in_browser'):
+            webbrowser.open_new_tab(self.url())
 
-    def url(self):
-        ''' returns url for snippet '''
-        if not self.lastResult:
+    def notify(self, message=False):
+        ''' '''
+        sound = False
+        if self.sublimeHelper.packageSetting('notification_sounds'):
+            sound = True
+        
+        termNotifierPath = os.system("which terminal-notifier")
+        
+        if termNotifierPath is not '':
+            self.notifyOSX(sound, message)
+        else:
+            self.notifyOther(sound, message)
+
+    def notifyOther(self, sound=False, message=False):
+        ''' '''
+        if message is not False:
+            sublime.error_message(message)
+        elif sublime.ok_cancel_dialog('Pasted to Glue: ' + self.url(), 'Go to URL'):
+            os.system('open ' + self.url())
+
+    def notifyOSX(self, sound=False, message=False):
+        ''' '''
+        if sound: sound = '-sound default'
+        
+        notificationMessage = self.url()
+        if message is not False: notificationMessage = message
+
+        notifyClickCommand = ''
+        if self.url(): notifyClickCommand = "-execute 'open "+self.url()+"'"
+
+        os.system("terminal-notifier -sender com.sublimetext.3 -title 'Pasted to Glue' -message '"+notificationMessage+"' "+sound+" "+notifyClickCommand)
+
+    def clipboard(self):
+        ''' '''
+        if self.sublimeHelper.packageSetting('save_to_clipboard'):
+            sublime.set_clipboard(self.url())
+
+    def hasAPIKey(self):
+        if not self.api_key or self.api_key == 'APIKEYGOESHERE':
+            self.lastError = 'Please enter a valid API key!'
             return False
-        return self.lastResult.geturl()
+        return True
 
-    def notify(self):
-        sublime.active_window().run_command("terminal_notifier", {
-            "title": "Pasted to Glue",
-            "message": self.url()
-        })
+    def hasPasteURL(self):
+        if not self.paste_url:
+            self.lastError = 'Please enter a valid paste url!'
+            return False
+        return True
+    
+    def save(self):
+
+        if self.hasAPIKey() and self.hasPasteURL():
+
+            data = self.urlencode({ 
+                'snippets': json.dumps(self.regions),
+                'apiKey': self.api_key,
+                'filename': self.filename,
+                'redirect': True
+            })
+
+            try:
+                result = urlopen(self.paste_url, data)
+                self.lastResult = result
+            except IOError as error:
+                self.lastError = error
+                self.lastResult = False
+
+        return self
+
+    def error(self):
+        ''' returns http error response from last save attempt '''
+        if self.sublimeHelper.packageSetting('notify_on_error'):
+            self.notify(str(self.lastError))
 
     def saved(self):
         ''' returns true if snippet has been successfully saved '''
         if not self.lastResult:
             return False
+        if self.lastError:
+            return False
         return True
-
-    def save(self):
-        data = self.urlencode({ 
-            'snippets': json.dumps(self.regions),
-            'apiKey': self.api_key,
-            'filename': self.filename,
-            'redirect': True
-        })
-
-        result = urlopen(self.paste_url, data)
-        self.lastResult = result
-        return result
