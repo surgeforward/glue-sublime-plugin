@@ -16,7 +16,8 @@ class GlueCommand(sublime_plugin.TextCommand):
         ''' '''
         Snippet = GlueSnippet(
             regions=self.selectedRegions(),
-            filename=self.getFilename()
+            filename=self.getFilename(),
+            syntax=self.getSyntax()
         ).save()
 
         if Snippet.saved():
@@ -45,6 +46,9 @@ class GlueCommand(sublime_plugin.TextCommand):
             return filenames[-1]
         return ''
 
+    def getSyntax(self):
+        return self.view.settings().get('syntax')
+
 class GlueSublimeText():
 
     @staticmethod
@@ -57,13 +61,16 @@ class GlueSublimeText():
 
 class GlueSnippet():
 
-    def __init__(self, filename=None, regions=None):
+    def __init__(self, filename=None, regions=None, syntax=None):
         ''' snippet initalization '''
         self.sublimeHelper = GlueSublimeText
         self.api_key = self.sublimeHelper.packageSetting('api_key')
         self.paste_url = self.sublimeHelper.packageSetting('paste_url')
+        
         self.filename = filename
         self.regions = regions
+        self.syntax = syntax
+        
         self.lastResult = None
         self.lastError = None
 
@@ -146,6 +153,7 @@ class GlueSnippet():
                 'snippets': json.dumps(self.regions),
                 'apiKey': self.api_key,
                 'filename': self.filename,
+                'syntax': self.syntax,
                 'redirect': True
             })
 
