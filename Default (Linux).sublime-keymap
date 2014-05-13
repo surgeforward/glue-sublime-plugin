@@ -1,5 +1,5 @@
 [
     {
-        "keys": ["super+shift+g"], "command": "glue"
+        "keys": ["super+alt+g"], "command": "glue"
     }
 ]
